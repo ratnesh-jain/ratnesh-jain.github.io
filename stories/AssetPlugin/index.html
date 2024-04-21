@@ -1,0 +1,56 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta property="og:site_name" content="Ratnesh Jain"/><link rel="canonical" href="https://ratnesh-jain.github.io/stories/AssetPlugin"/><meta name="twitter:url" content="https://ratnesh-jain.github.io/stories/AssetPlugin"/><meta property="og:url" content="https://ratnesh-jain.github.io/stories/AssetPlugin"/><title>Asset Plugin Library | Ratnesh Jain</title><meta name="twitter:title" content="Asset Plugin Library | Ratnesh Jain"/><meta property="og:title" content="Asset Plugin Library | Ratnesh Jain"/><meta name="description" content="Asset Plugin generator for asset catalogue when used within swift package."/><meta name="twitter:description" content="Asset Plugin generator for asset catalogue when used within swift package."/><meta property="og:description" content="Asset Plugin generator for asset catalogue when used within swift package."/><meta name="twitter:card" content="summary"/><link rel="stylesheet" href="/styles.css" type="text/css"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><link rel="shortcut icon" href="/images/favicon.png" type="image/png"/><link rel="alternate" href="/feed.rss" type="application/rss+xml" title="Subscribe to Ratnesh Jain"/></head><body class="item-page"><header><div class="wrapper"><a href="/" class="site-name">Ratnesh Jain</a><nav><ul><li><a href="/stories" class="selected">Stories</a></li><li><a href="/about">About</a></li></ul></nav></div></header><div class="wrapper"><article><div class="content"><h1>Asset Plugin Library</h1><p>Library: <a href="https://github.com/ratnesh-jain/AssetPluginLibrary">https://github.com/ratnesh-jain/AssetPluginLibrary</a></p><p>Utilizing the local Swift Package Manager (SPM) for Apple platform development offers a plethora of advantages:</p><ul><li><strong>Enhanced compile time</strong>: SPM efficiently manages dependencies, reducing compilation times.</li><li><strong>Isolated feature creation</strong>: SPM facilitates the creation of isolated features, enhancing testability.</li><li><strong>Improved Xcode preview integration</strong>: Swift package targets/modules seamlessly integrate with Xcode preview functionality, allowing for rapid iteration and refined UI development.</li></ul><p>Since the release of Xcode 15, it automatically generates source code for type-safe asset access, a highly beneficial feature. This includes both Xcode project's Asset Catalogs and from Swift packages.</p><p>However, there's currently a limitation wherein Xcode doesn't generate public methods for xcassets within Swift packages. To address this gap, our library offers a solution akin to Xcode's functionality.</p><p>Let's explore the issue further and discover how leveraging the <strong>AssetPluginLibrary</strong> can effectively mitigate it</p><h2>The Problem</h2><p>Create a Swift package and add a folder inside the <code>Sources</code> directory named "Resources". Now let add Asset catelogue to the newly created <code>Resources</code> directory.<br><img src="/Images/AssetPluginLibrary/AddingAssetsCatelogeToModule.png" alt="Adding Asset Catelogues"/></p><p>Let's add few images to the <code>Media</code> Asset Catelog.</p><img src="/Images/AssetPluginLibrary/AddingAssets.png" alt="Adding Assets"/><p>Now if we build the package, Xcode will generate some code to access the media assets as shown below.</p><img src="/Images/AssetPluginLibrary/XcodeGeneratedCode.png" alt="Xcode Generated Code"/><p>As we will see, this generated code does not have any access control modifiers, which is internal by default. This will cause the access to the Resources module only, but we need to access these across other features creating Views for user interfaces.</p><h2>The Solution</h2><p>We can now add the <a href="https://github.com/ratnesh-jain/AssetPluginLibrary">AssetPluginLibrary</a> as a dependency to our package.</p><pre><code><span class="keyword">let</span> package = <span class="type">Package</span>(
+    name: <span class="string">"Application"</span>,
+    platforms: [.<span class="call">iOS</span>(.<span class="dotAccess">v17</span>)],
+    products: [
+        .<span class="call">library</span>(
+            name: <span class="string">"Application"</span>,
+            targets: [<span class="string">"Application"</span>]),
+    ],
+    dependencies: [
++        .<span class="call">package</span>(url: <span class="string">"https://github.com/ratnesh-jain/AssetPluginLibrary"</span>, .<span class="dotAccess">upToNextMajor</span>(from: <span class="string">"0.0.1"</span>)),
+    ],
+    targets: [
+        .<span class="call">target</span>(name: <span class="string">"Resources"</span>, dependencies: []),
+        .<span class="call">target</span>(
+            name: <span class="string">"Application"</span>, dependencies: [<span class="string">"Resources"</span>]),
+        .<span class="call">testTarget</span>(
+            name: <span class="string">"ApplicationTests"</span>,
+            dependencies: [<span class="string">"Application"</span>]),
+    ]
+)
+</code></pre><p>Example Source: <a href="https://github.com/ratnesh-jain/AssetPluginLibraryExamplePackage/blob/main/Package.swift">Package.swift</a></p><p>As we add this library as a package dependency, and it exports a SwiftPackagePlugin, Xcode will now shows an plugin action <code>Generate Asset Resources</code> to the our Package's context menu as shown below.</p><img src="/Images/AssetPluginLibrary/ThePlugin.png" alt="The Plugin"/><p>Xcode will now preset a modal for selecting module in which we have <code>.xcassets</code> file which is <code>Resources</code> in this example.</p><ul><li>NOTE: For Xcode to show <code>Resources</code> as a input option, we need to make the <code>Resources</code> target as a product first as below.</li></ul><pre><code><span class="keyword">let</span> package = <span class="type">Package</span>(
+    name: <span class="string">"Application"</span>,
+    platforms: [.<span class="call">iOS</span>(.<span class="dotAccess">v17</span>)],
+    products: [
+        <span class="comment">// Products define the executables and libraries a package produces, making them visible to other packages.</span>
+        .<span class="call">library</span>(
+            name: <span class="string">"Application"</span>,
+            targets: [<span class="string">"Application"</span>]),
++        .<span class="call">library</span>(
++            name: <span class="string">"Resources"</span>,
++            targets: [<span class="string">"Resources"</span>]
++        ),
+    ],
+
+</code></pre><img src="/Images/AssetPluginLibrary/SelectTheResourcesModule.png" alt="Select the Resources"/><p>This plugin action will create a new swift file called <code>AssetResource</code> in which it generates all the code similar to Xcode but with public access control modifier as shown in screenshot below.</p><img src="/Images/AssetPluginLibrary/PublicGeneratedCode.png" alt="PublicGeneratedCode"/><p>Now we can import the Resources module to our Application module, and we can access the newly generated assets using a new Image initialiser <code>Image(asset: ImageAssetResource)</code>.</p><pre><code><span class="keyword">import</span> Foundation
+<span class="keyword">import</span> Resources
+<span class="keyword">import</span> SwiftUI
+
+<span class="keyword">public struct</span> AppFeature: <span class="type">View</span> {
+    
+    <span class="keyword">public var</span> body: <span class="keyword">some</span> <span class="type">View</span> {
+        <span class="type">VStack</span> {
++            <span class="type">Image</span>(asset: .<span class="dotAccess">appleMaps</span>)
+                .<span class="call">resizable</span>()
+                .<span class="call">aspectRatio</span>(contentMode: .<span class="dotAccess">fit</span>)
++            <span class="type">Image</span>(asset: .<span class="dotAccess">swiftScript</span>)
+                .<span class="call">resizable</span>()
+                .<span class="call">aspectRatio</span>(contentMode: .<span class="dotAccess">fit</span>)
++            <span class="type">Image</span>(asset: .<span class="dotAccess">swiftui</span>)
+                .<span class="call">resizable</span>()
+                .<span class="call">aspectRatio</span>(contentMode: .<span class="dotAccess">fit</span>)
+        }
+    }
+    
+}
+</code></pre><p>Example: <a href="https://github.com/ratnesh-jain/AssetPluginLibraryExamplePackage/blob/main/Sources/Application/AppFeature.swift">Application.swift</a></p><img src="/Images/AssetPluginLibrary/AccessAcrossModules.png" alt="AccessAcrossModules"/><p>We trust you find this article insightful and informative. Thank you for reading.</p></div><span>Tagged with: </span><ul class="tag-list"><li><a href="/tags/swift">swift</a></li><li><a href="/tags/swift-package-manager">swift package manager</a></li><li><a href="/tags/swift-package-plugin">swift package plugin</a></li></ul></article></div><footer><p><a href="/feed.rss">RSS feed</a></p></footer></body></html>

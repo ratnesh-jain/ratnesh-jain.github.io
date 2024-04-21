@@ -1,0 +1,186 @@
+<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"/><meta property="og:site_name" content="Ratnesh Jain"/><link rel="canonical" href="https://ratnesh-jain.github.io/stories/MultipleSceneSupportInTCA"/><meta name="twitter:url" content="https://ratnesh-jain.github.io/stories/MultipleSceneSupportInTCA"/><meta property="og:url" content="https://ratnesh-jain.github.io/stories/MultipleSceneSupportInTCA"/><title>Multiple Scene Support in TCA. | Ratnesh Jain</title><meta name="twitter:title" content="Multiple Scene Support in TCA. | Ratnesh Jain"/><meta property="og:title" content="Multiple Scene Support in TCA. | Ratnesh Jain"/><meta name="description" content="Allow multiple scenes for SwiftUI App in TCA."/><meta name="twitter:description" content="Allow multiple scenes for SwiftUI App in TCA."/><meta property="og:description" content="Allow multiple scenes for SwiftUI App in TCA."/><meta name="twitter:card" content="summary"/><link rel="stylesheet" href="/styles.css" type="text/css"/><meta name="viewport" content="width=device-width, initial-scale=1.0"/><link rel="shortcut icon" href="/images/favicon.png" type="image/png"/><link rel="alternate" href="/feed.rss" type="application/rss+xml" title="Subscribe to Ratnesh Jain"/></head><body class="item-page"><header><div class="wrapper"><a href="/" class="site-name">Ratnesh Jain</a><nav><ul><li><a href="/stories" class="selected">Stories</a></li><li><a href="/about">About</a></li></ul></nav></div></header><div class="wrapper"><article><div class="content"><h1>Multiple Scene Support in TCA.</h1><p>When developing an app with SwiftUI, it offers seamless adoption for various platforms such as <code>iPadOS</code>, <code>macOS</code>, <code>watchOS</code>, and <code>visionOS</code>, leveraging SwiftUI's inherent adaptability to render components appropriately across these platforms.</p><p>In this article, we delve into the additional features brought about by adopting for iPadOS, particularly focusing on enabling multiple windows, referred to as scenes in the development context.</p><video controls>
+    <source src="/Videos/MultipleScene.mov" type="video/mp4">
+</video><p>Enabling multiple scenes requires adding a key into the Info.plist of the app. Here's what it looks like:</p><pre><code>&lt;dict&gt;
+    &lt;key&gt;<span class="type">UIApplicationSupportsMultipleScenes</span>&lt;/key&gt;
+    &lt;<span class="keyword">true</span>/&gt;
+    &lt;key&gt;<span class="type">UISceneConfigurations</span>&lt;/key&gt;
+    &lt;dict/&gt;
+&lt;/dict&gt;
+</code></pre><p>Or, represented visually:</p><img src="/Images/Multiple-Scene-Info.png" alt="Info-plist"/><h2>The Problem</h2><video controls>
+    <source src="/Videos/MultiSceneStore.mov" type="video/mp4">
+</video><p>As depicted in the above video, both scenes are utilizing the same store, which is not desirable behavior for this app. Given its nature as a file browser app, it should have separate state for different paths.</p><h3>Current App Setup</h3><pre><code><span class="keyword">import</span> AppFeature
+<span class="keyword">import</span> ComposableArchitecture
+<span class="keyword">import</span> SwiftUI
+
+<span class="keyword">@main
+struct</span> FileBrowserApp: <span class="type">App</span> {
+    
+    <span class="keyword">let</span> store: <span class="type">StoreOf</span>&lt;<span class="type">AppFeature</span>&gt; = .<span class="keyword">init</span>(initialState: <span class="type">AppFeature</span>.<span class="type">State</span>()) {
+        <span class="type">AppFeature</span>()
+    }
+
+    <span class="keyword">var</span> body: <span class="keyword">some</span> <span class="type">Scene</span> {
+        <span class="type">WindowGroup</span> {
+            <span class="type">AppView</span>(store: store)
+        }
+    }
+    
+}
+</code></pre><p>At first glance, it may seem appropriate to create a store at the App level for reuse across all windows/scenes, as demonstrated above.</p><pre><code><span class="keyword">@main
+struct</span> FileBrowserApp: <span class="type">App</span> {
+    
+    <span class="keyword">let</span> store: <span class="type">StoreOf</span>&lt;<span class="type">AppFeature</span>&gt; = .<span class="keyword">init</span>(initialState: <span class="type">AppFeature</span>.<span class="type">State</span>()) {
+        <span class="type">AppFeature</span>()
+    }
+
+    <span class="keyword">var</span> body: <span class="keyword">some</span> <span class="type">Scene</span> {
+        <span class="type">WindowGroup</span> {
+            <span class="type">AppView</span>(store: .<span class="keyword">init</span>(initialState: <span class="type">AppFeature</span>.<span class="type">State</span>() {
+                <span class="type">AppFeature</span>()
+            })
+        }
+    }
+}
+
+</code></pre><p>However, as of iOS 17, this approach does not create a new <code>WindowGroup</code> but rather utilizes the same, resulting in the shared store issue. To address this, we can programmatically opt-in using the <code>UISceneDelegate</code> class.</p><h3>The Solution</h3><p>To implement a SceneDelegate, we can utilize two methods: one by installing AppDelegate and the other by using Info.plist. Here, we adopt the former approach.</p><pre><code><span class="keyword">class</span> FileBrowserAppDelegate: <span class="type">NSObject</span>, <span class="type">UIApplicationDelegate</span> {
+
+    <span class="keyword">func</span> application(
+        <span class="keyword">_</span> application: <span class="type">UIApplication</span>, configurationForConnecting connectingSceneSession: <span class="type">UISceneSession</span>, options: <span class="type">UIScene</span>.<span class="type">ConnectionOptions</span>
+    ) -&gt; <span class="type">UISceneConfiguration</span> {
+        <span class="keyword">let</span> sceneConfig = <span class="type">UISceneConfiguration</span>(name: <span class="keyword">nil</span>, sessionRole: connectingSceneSession.<span class="property">role</span>)
+
+        <span class="comment">// Defining a delegate Class when there is a new session to about to connect.</span>
+        sceneConfig.<span class="property">delegateClass</span> = <span class="type">FileBrowserSceneDelegate</span>.<span class="keyword">self
+        return</span> sceneConfig
+    }
+
+}
+</code></pre><p>In the above code, we assign a scene delegate using <code>sceneConfig.delegateClass = FileBrowserSceneDelegate.self</code>. The <code>FileBrowserSceneDelegate</code> class appears as follows:</p><pre><code><span class="keyword">class</span> FileBrowserSceneDelegate: <span class="type">NSObject</span>, <span class="type">UIWindowSceneDelegate</span>, <span class="type">ObservableObject</span> {
+
+    <span class="keyword">var</span> store: <span class="type">StoreOf</span>&lt;<span class="type">AppFeature</span>&gt; = {
+        .<span class="keyword">init</span>(initialState: <span class="type">AppFeature</span>.<span class="type">State</span>()) {
+            <span class="type">AppFeature</span>()
+        }
+    }()
+    
+}
+</code></pre><p>Here, we create a store for the app in the <code>SceneDelegate</code>, as a new <code>SceneDelegate</code> instance is created for every scene session. Notably, <code>FileBrowserSceneDelegate</code> conforms to the <code>ObservableObject</code> protocol, allowing SwiftUI to automatically install the <code>SceneDelegate</code> instance to <code>EnvironmentObject</code>. Consequently, we can access the store from the sceneDelegate via <code>EnvironmentObject</code>, as illustrated below:</p><pre><code><span class="keyword">struct</span> AppContainer: <span class="type">View</span> {
+
+    <span class="keyword">@EnvironmentObject var</span> sceneDelegate: <span class="type">FileBrowserSceneDelegate</span>
+
+    <span class="keyword">var</span> body: <span class="keyword">some</span> <span class="type">View</span> {
+        <span class="type">AppView</span>(store: sceneDelegate.<span class="property">store</span>)
+            .<span class="call">onOpenURL</span> { url <span class="keyword">in</span>
+                sceneDelegate.<span class="property">store</span>.<span class="call">send</span>(.<span class="call">openURL</span>(url))
+            }
+    }
+    
+}
+</code></pre><p>To access the EnvironmentObject, we encapsulate it within a separate view such as AppContainer. We can then update FileBrowserApp (entry point) as follows:</p><pre><code><span class="keyword">struct</span> FileBrowserApp: <span class="type">App</span> {
+    
+    <span class="keyword">@UIApplicationDelegateAdaptor</span>(<span class="type">FileBrowserAppDelegate</span>.<span class="keyword">self</span>) <span class="keyword">var</span> appDelegate
+
+    <span class="keyword">var</span> body: <span class="keyword">some</span> <span class="type">Scene</span> {
+        <span class="type">WindowGroup</span> {
+            <span class="type">AppContainer</span>()
+        }
+    }
+}
+</code></pre><p>To integrate an AppDelegate into a SwiftUI App, we utilize the <code>@UIApplicationDelegateAdaptor</code> property wrapper.</p><video controls>
+    <source src="/Videos/Multi-Scene-Solution.mov" type="video/mp4">
+</video><h2>Opening Window via User Input</h2><p>Occasionally, there arises a need to open a new window specifically for a directory, a functionality reserved for iPadOS/macOS environments only.</p><video controls>
+    <source src="/Videos/Open-In-Window.webm" type="video/webm">
+</video><p>SwiftUI offers environment property wrappers tailored for such adaptations:</p><pre><code><span class="keyword">@Environment</span>(\.<span class="property">supportsMultipleWindows</span>) <span class="keyword">var</span> supportsMultipleWindows
+<span class="keyword">@Environment</span>(\.<span class="property">openWindow</span>) <span class="keyword">var</span> openWindow
+
+<span class="keyword">var</span> body: <span class="keyword">some</span> <span class="type">View</span> {
+    <span class="type">ForEach</span>(store.<span class="property">items</span>) { item <span class="keyword">in</span>
+        <span class="type">DirectoryItemView</span>(item, store: store)
+            .<span class="call">contextMenu</span> {
+                <span class="keyword">if</span> supportsMultipleWindows {
+                    <span class="type">Button</span>(<span class="string">"Open in Window"</span>) {
+                        <span class="call">openWindow</span>(value: item.<span class="property">path</span>)
+                    }
+                }
+            }
+    }
+}
+</code></pre><p>However, these property wrappers retrieve their values solely within a View, thereby introducing a dependency that diminishes the testability of our feature. To mitigate this, we can employ a Dependency client for UIApplication-related operations.</p><h3>UIApplication Dependency</h3><pre><code><span class="keyword">@DependencyClient
+public struct</span> UIApplicationClient {
+    <span class="keyword">public var</span> supportsMultipleWindows: () -&gt; <span class="type">Bool</span> = { <span class="keyword">false</span> }
+    <span class="keyword">public var</span> openWindow: (<span class="keyword">_</span> path: <span class="type">String</span>) <span class="keyword">async</span> -&gt; <span class="type">Void</span>
+}
+
+<span class="keyword">extension</span> <span class="type">UIApplicationClient</span>: <span class="type">DependencyKey</span> {
+    <span class="keyword">public static var</span> liveValue: <span class="type">UIApplicationClient</span> = {
+        <span class="keyword">return</span> .<span class="keyword">init</span> {
+            <span class="type">UIApplication</span>.<span class="property">shared</span>.<span class="property">supportsMultipleScenes</span>
+        } openWindow: { path <span class="keyword">in
+            let</span> activity = <span class="type">NSUserActivity</span>(activityType: <span class="string">"path"</span>)
+            activity.<span class="property">userInfo</span> = [<span class="string">"path"</span>: path]
+            <span class="keyword">await</span> <span class="type">UIApplication</span>.<span class="property">shared</span>.<span class="call">activateSceneSession</span>(
+                for: <span class="type">UISceneSessionActivationRequest</span>(
+                    role: .<span class="dotAccess">windowApplication</span>,
+                    userActivity: activity
+                )
+            )
+        }
+    }()
+}
+</code></pre><ul><li><code>supportsMultipleWindows</code> will return true if the app runs on <code>iPadOS</code> and if the Info.plist contains the <code>UIApplicationSupportsMultipleScenes</code> key set to true.</li></ul><ul><li>The <code>openWindow</code> method opens a new window by activating a Scene Session and passing the path via <code>NSUserActivity</code>.</li></ul><p>We can integrate this dependency into the DirectoryFeature as follows:</p><pre><code><span class="keyword">@Reducer
+public struct</span> DirectoryFeature {
+    <span class="keyword">@ObservableState
+    public struct</span> State: <span class="type">Equatable</span> {
+        <span class="keyword">var</span> supportsMultipleWindows: <span class="type">Bool</span>
+        
+        <span class="keyword">init</span>() {
+            <span class="keyword">@Dependency</span>(\.<span class="property">uiApplicationClient</span>) <span class="keyword">var</span> uiApp
+            <span class="keyword">self</span>.<span class="property">supportsMultipleWindows</span> = uiApp.<span class="call">supportsMultipleWindows</span>()
+        }
+    }
+    
+    <span class="keyword">public enum</span> Action: <span class="type">Equatable</span> {
+        <span class="keyword">case</span> contextMenu(<span class="type">MenuAction</span>, item: <span class="type">ItemPath</span>)
+        
+        <span class="keyword">public enum</span> MenuAction: <span class="type">Equatable</span> {
+            <span class="keyword">case</span> openInWindow
+            ...
+        }
+    }
+    
+    <span class="keyword">@Dependency</span>(\.<span class="property">uiApplicationClient</span>) <span class="keyword">private var</span> uiApp
+    
+    <span class="keyword">public init</span>() {}
+    
+    <span class="keyword">public var</span> body: <span class="keyword">some</span> <span class="type">ReducerOf</span>&lt;<span class="type">Self</span>&gt; {
+        <span class="type">Reduce</span>&lt;<span class="type">State</span>, <span class="type">Action</span>&gt; { state, action <span class="keyword">in
+            switch</span> action {
+                <span class="keyword">case</span> .<span class="dotAccess">contextMenu</span>(<span class="keyword">let</span> action, <span class="keyword">let</span> item):
+                    <span class="keyword">switch</span> action {
+                    <span class="keyword">case</span> .<span class="dotAccess">openInWindow</span>:
+                        <span class="keyword">return</span> .<span class="call">run</span> { send <span class="keyword">in
+                            await</span> uiApp.<span class="call">openWindow</span>(path: item.<span class="property">path</span>)
+                        }
+                        ...
+                    }
+            }
+        }
+    }
+}
+</code></pre><p>To retrieve the NSUserActivity for the new scene, we incorporate the following code into our SceneDelegate:</p><pre><code><span class="keyword">class</span> FileBrowserSceneDelegate: <span class="type">NSObject</span>, <span class="type">UIWindowSceneDelegate</span>, <span class="type">ObservableObject</span> {
+    <span class="keyword">var</span> store: <span class="type">StoreOf</span>&lt;<span class="type">AppFeature</span>&gt; = {
+        .<span class="keyword">init</span>(initialState: <span class="type">AppFeature</span>.<span class="type">State</span>()) {
+            <span class="type">AppFeature</span>()
+        }
+    }()
+
+    
+    <span class="keyword">func</span> scene(<span class="keyword">_</span> scene: <span class="type">UIScene</span>, willConnectTo session: <span class="type">UISceneSession</span>, options connectionOptions: <span class="type">UIScene</span>.<span class="type">ConnectionOptions</span>) {
+        <span class="keyword">if let</span> userActivity = connectionOptions.<span class="property">userActivities</span>.<span class="property">first</span>,
+            <span class="keyword">let</span> path = userActivity.<span class="property">userInfo</span>?[<span class="string">"path"</span>] <span class="keyword">as</span>? <span class="type">String</span>
+        {
+            store.<span class="call">send</span>(.<span class="call">updatePath</span>(path))
+        }
+    }
+}
+</code></pre><p>Consequently, creating a fresh store and updating its path upon receiving a new path in the user activity from the connection options will allow us to utilize the multiple windows feature of iPadOS accurately.</p><p>We trust you find this article insightful and informative. Thank you for reading.</p></div><span>Tagged with: </span><ul class="tag-list"><li><a href="/tags/tca">TCA</a></li><li><a href="/tags/swiftui">SwiftUI</a></li><li><a href="/tags/multiplescene">Multiple-Scene</a></li></ul></article></div><footer><p><a href="/feed.rss">RSS feed</a></p></footer></body></html>
