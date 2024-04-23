@@ -14,7 +14,19 @@
 
 <span class="keyword">@main
 struct</span> FileBrowserApp: <span class="type">App</span> {
+
+    <span class="keyword">var</span> body: <span class="keyword">some</span> <span class="type">Scene</span> {
+        <span class="type">WindowGroup</span> {
+            <span class="type">AppView</span>(store: .<span class="keyword">init</span>(initialState: <span class="type">AppFeature</span>.<span class="type">State</span>() {
+                <span class="type">AppFeature</span>()
+            })
+        }
+    }
     
+}
+</code></pre><p>At first glance, it may seem appropriate to create a store at the App level for reuse across all windows/scenes.</p><pre><code><span class="keyword">@main
+struct</span> FileBrowserApp: <span class="type">App</span> {
+
     <span class="keyword">let</span> store: <span class="type">StoreOf</span>&lt;<span class="type">AppFeature</span>&gt; = .<span class="keyword">init</span>(initialState: <span class="type">AppFeature</span>.<span class="type">State</span>()) {
         <span class="type">AppFeature</span>()
     }
@@ -26,23 +38,8 @@ struct</span> FileBrowserApp: <span class="type">App</span> {
     }
     
 }
-</code></pre><p>At first glance, it may seem appropriate to create a store at the App level for reuse across all windows/scenes, as demonstrated above.</p><pre><code><span class="keyword">@main
-struct</span> FileBrowserApp: <span class="type">App</span> {
-    
-    <span class="keyword">let</span> store: <span class="type">StoreOf</span>&lt;<span class="type">AppFeature</span>&gt; = .<span class="keyword">init</span>(initialState: <span class="type">AppFeature</span>.<span class="type">State</span>()) {
-        <span class="type">AppFeature</span>()
-    }
 
-    <span class="keyword">var</span> body: <span class="keyword">some</span> <span class="type">Scene</span> {
-        <span class="type">WindowGroup</span> {
-            <span class="type">AppView</span>(store: store) {
-                <span class="type">AppFeature</span>()
-            })
-        }
-    }
-}
-
-</code></pre><p>However, as of iOS 17, this approach does not create a new <code>WindowGroup</code> but rather utilizes the same, resulting in the shared store issue. To address this, we can programmatically opt-in using the <code>UISceneDelegate</code> class.</p><h3>The Solution</h3><p>To implement a SceneDelegate, we can utilize two methods: one by installing AppDelegate and the other by using Info.plist. Here, we adopt the former approach.</p><pre><code><span class="keyword">class</span> FileBrowserAppDelegate: <span class="type">NSObject</span>, <span class="type">UIApplicationDelegate</span> {
+</code></pre><p>However, as of SwiftUI in iOS 17, this approach does not create a new <code>WindowGroup</code> but rather utilizes the same, resulting in the shared store issue. To address this, we can programmatically opt-in using the <code>UISceneDelegate</code> class.</p><h3>The Solution</h3><p>To implement a SceneDelegate, we can utilize two methods: one by installing AppDelegate and the other by using Info.plist. Here, we adopt the former approach.</p><pre><code><span class="keyword">class</span> FileBrowserAppDelegate: <span class="type">NSObject</span>, <span class="type">UIApplicationDelegate</span> {
 
     <span class="keyword">func</span> application(
         <span class="keyword">_</span> application: <span class="type">UIApplication</span>, configurationForConnecting connectingSceneSession: <span class="type">UISceneSession</span>, options: <span class="type">UIScene</span>.<span class="type">ConnectionOptions</span>
