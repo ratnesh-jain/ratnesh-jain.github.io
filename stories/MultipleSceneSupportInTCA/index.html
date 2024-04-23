@@ -35,7 +35,7 @@ struct</span> FileBrowserApp: <span class="type">App</span> {
 
     <span class="keyword">var</span> body: <span class="keyword">some</span> <span class="type">Scene</span> {
         <span class="type">WindowGroup</span> {
-            <span class="type">AppView</span>(store: .<span class="keyword">init</span>(initialState: <span class="type">AppFeature</span>.<span class="type">State</span>() {
+            <span class="type">AppView</span>(store: store) {
                 <span class="type">AppFeature</span>()
             })
         }
