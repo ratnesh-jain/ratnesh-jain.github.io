@@ -198,8 +198,8 @@ ul ul {
     display: inline-block;
     background-color: var(--main-tag-item-background);
     color: #ddd;
-    padding: 4px 6px;
-    border-radius: 8px;
+    padding: 4px 10px;
+    border-radius: 16px;
     margin-right: 0px;
 }
 
