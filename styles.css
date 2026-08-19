@@ -568,7 +568,7 @@ section.content:nth-of-type(4) > .section-grid {
 .section-card {
     text-align: left;
     padding: 20px;
-    border-radius: 8px;
+    border-radius: 20px;
     border: 1px solid var(--main-divider-color);
     background-color: var(--section-card-bg);
     text-decoration: none;
@@ -650,4 +650,155 @@ section.content:nth-of-type(4) > .section-grid {
 .download-btn:hover {
     background: #4090e0;
     transform: translateY(-2px);
+}
+
+.app-hero {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    min-height: 70vh;
+    padding: 60px 20px;
+    text-align: center;
+    background-color: var(--main-background-color-alt);
+    background-image: radial-gradient(var(--dot-grid-color) 1.5px, transparent 1.5px);
+    background-size: 24px 24px;
+}
+
+.app-icon {
+    width: 128px;
+    height: 128px;
+    border-radius: 28px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+    margin-bottom: 24px;
+}
+
+.app-hero h1 {
+    margin-bottom: 12px;
+}
+
+.app-hero .description {
+    color: var(--main-list-item-foreground);
+    max-width: 640px;
+    margin: 0 auto 12px auto;
+}
+
+.app-badges {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+    margin-top: 24px;
+}
+
+.app-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: var(--section-card-bg);
+    border: 1px solid var(--main-divider-color);
+    color: var(--main-text-color);
+    padding: 10px 20px;
+    border-radius: 50px;
+    font-weight: 600;
+    transition: all 0.2s ease;
+    text-decoration: none;
+}
+
+.app-badge:hover {
+    border-color: var(--primary-accent);
+    color: var(--primary-accent);
+    transform: translateY(-1px);
+}
+
+.app-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    justify-content: center;
+    margin-top: 20px;
+    color: var(--main-list-item-foreground);
+    font-size: 0.9em;
+}
+
+.app-meta span {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.install-steps {
+    counter-reset: step;
+    margin-top: 8px;
+}
+
+.install-step {
+    display: grid;
+    grid-template-columns: 48px 1fr;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 20px;
+    margin-bottom: 16px;
+    border-radius: 20px;
+    border: 1px solid var(--main-divider-color);
+    background-color: var(--section-card-bg);
+    text-align: left;
+}
+
+.install-step:nth-child(even) {
+    background-color: var(--section-card-bg-alt);
+}
+
+.install-step .step-num {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    background: var(--primary-accent);
+    color: #fff;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.1em;
+}
+
+.install-step h3 {
+    margin: 0 0 6px 0;
+}
+
+.install-step p {
+    margin: 0;
+    color: var(--main-list-item-foreground);
+}
+
+.legal-page {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 40px 20px;
+    text-align: left;
+}
+
+.legal-page h1 {
+    margin-bottom: 8px;
+}
+
+.legal-page .updated {
+    color: var(--main-list-item-foreground);
+    margin-bottom: 32px;
+}
+
+.legal-page h2 {
+    margin-top: 32px;
+}
+
+.legal-page p, .legal-page li {
+    color: var(--main-text-color);
+}
+
+@media (max-width: 600px) {
+    .app-icon {
+        width: 96px;
+        height: 96px;
+        border-radius: 22px;
+    }
 }
